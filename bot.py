@@ -12,7 +12,7 @@ from telegram.ext import (
     filters
 )
 
-# Load environment variables
+# Load environment variables (useful for local development)
 load_dotenv()
 
 # Enable logging
@@ -78,7 +78,6 @@ async def start_csv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 # --- 3. CONVERSATION HANDLER DEFINITIONS ---
-# Fixed: 'per_message=True' removed to prevent warnings with Command/Message Handlers
 add_task_conv = ConversationHandler(
     entry_points=[CommandHandler("add", start_add_task)],
     states={
@@ -116,7 +115,16 @@ csv_conv = ConversationHandler(
 async def main() -> None:
     init_db()
 
-    TOKEN = os.environ.get("TELEGRAM_TOKEN", "YOUR_FALLBACK_TOKEN")
+    # Fallback cascade: Checks for common environment variable names
+    TOKEN = os.environ.get("TELEGRAM_TOKEN") or os.environ.get("TELEGRAM_BOT_TOKEN") or os.environ.get("BOT_TOKEN")
+
+    # Safety Guard: Fail early with a descriptive logs message if no token is configured
+    if not TOKEN or TOKEN.strip() in ["", "YOUR_FALLBACK_TOKEN", "YOUR_FALLBACK_TOKEN_IF_LOCAL"]:
+        logger.error("❌ CRITICAL ERROR: No valid Telegram token found in Render Environment Variables!")
+        print("\n=== DEPLOYMENT STOPPED ===")
+        print("Please log into your Render Dashboard, navigate to 'Environment',")
+        print("and add a variable named 'TELEGRAM_TOKEN' containing your actual bot token.\n")
+        return
 
     # Build application framework
     application = ApplicationBuilder().token(TOKEN).build()
@@ -128,10 +136,9 @@ async def main() -> None:
     application.add_handler(tz_conv)
     application.add_handler(csv_conv)
 
-    # Initialize, start, and run polling within the explicitly managed async loop
     logger.info("Starting bot polling system...")
     
-    # Using the lower-level initialization flow to bypass the internal loop bugs of Python 3.14
+    # Initialize, start, and run polling within the explicitly managed async loop
     await application.initialize()
     await application.start()
     await application.updater.start_polling()
