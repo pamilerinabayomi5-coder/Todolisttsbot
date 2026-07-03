@@ -66,11 +66,18 @@ def main():
     app.add_handler(CallbackQueryHandler(handlers.dispatch_menu_routing))
 
     # Background Tasks Initialization
-    loop = asyncio.get_event_loop()
-    loop.create_task(scheduler.reminder_worker(app))
+   #  RECOMMENDED PATTERN
+def main():
+    # 1. Build your application
+    application = ApplicationBuilder().token("YOUR_TOKEN").build()
 
-    logger.info("Bot execution loop initialized successfully.")
-    app.run_polling()
+    # 2. Add your conversation handlers, handlers, etc.
+    application.add_handler(add_task_conv)
+    # ...
 
-if __name__ == "__main__":
+    # 3. Start the bot (this automatically manages the async loop)
+    application.run_polling()
+
+if __name__ == '__main__':
+    main()
     main()
