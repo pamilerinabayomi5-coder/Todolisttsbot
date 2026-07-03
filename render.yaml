@@ -1,0 +1,13 @@
+services:
+  - type: worker
+    name: todolist-ts-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: DATABASE_NAME
+        value: todolist.db
+      - key: TIMEZONE
+        value: UTC
